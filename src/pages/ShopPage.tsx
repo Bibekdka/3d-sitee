@@ -76,21 +76,7 @@ export default function ShopPage() {
         const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(50));
         const querySnapshot = await getDocs(q);
         const productList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        
-        if (productList.length === 0) {
-          setProducts([
-            { id: '1', name: 'Cyberpunk Helmet v2', price: 299, category: 'Wearables', imageUrls: ['https://picsum.photos/seed/helmet/600/600'], stock: 10, rating: 4.8 },
-            { id: '2', name: 'Low Poly Planter', price: 45, category: 'Home', imageUrls: ['https://picsum.photos/seed/planter/600/600'], stock: 30, rating: 4.5 },
-            { id: '3', name: 'Orbital Desk Lamp', price: 120, category: 'Lighting', imageUrls: ['https://picsum.photos/seed/lamp/600/600'], stock: 5, rating: 4.9 },
-            { id: '4', name: 'Titanium Toggles', price: 25, category: 'Tools', imageUrls: ['https://picsum.photos/seed/tool/600/600'], stock: 50, rating: 4.2 },
-            { id: '5', name: 'Vortex Pendant', price: 85, category: 'Jewelry', imageUrls: ['https://picsum.photos/seed/jewelry/600/600'], stock: 15, rating: 4.7 },
-            { id: '6', name: 'Aero Case for iPhone', price: 35, category: 'Accessories', imageUrls: ['https://picsum.photos/seed/case/600/600'], stock: 20, rating: 4.4 },
-            { id: '7', name: 'Kinetic Desk Toy', price: 65, category: 'Home', imageUrls: ['https://picsum.photos/seed/toy/600/600'], stock: 12, rating: 4.6 },
-            { id: '8', name: 'Neural Link Bracelet', price: 150, category: 'Jewelry', imageUrls: ['https://picsum.photos/seed/bracelet/600/600'], stock: 8, rating: 4.8 },
-          ]);
-        } else {
-          setProducts(productList);
-        }
+        setProducts(productList);
       } catch (err) {
         console.error(err);
       } finally {

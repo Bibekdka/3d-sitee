@@ -59,13 +59,6 @@ export default function HomePage() {
         const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShowcaseItem));
         if (list.length > 0) {
           setShowcaseItems(list);
-        } else {
-          // Fallback if empty
-          setShowcaseItems([
-            { id: '1', imageUrl: 'https://picsum.photos/seed/p1/800/1000', comment: 'Futuristic Helmet', username: 'Alex VR' },
-            { id: '2', imageUrl: 'https://picsum.photos/seed/p2/800/800', comment: 'Low Poly Planter', username: 'Studio_Min' },
-            { id: '3', imageUrl: 'https://picsum.photos/seed/p3/800/1200', comment: 'Translucent Lamp', username: 'LuxDesign' },
-          ]);
         }
       } catch (err) {
         console.error("Showcase Fetch Error:", err);

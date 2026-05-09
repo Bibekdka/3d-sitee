@@ -62,21 +62,6 @@ export default function ProductDetailsPage() {
         
         if (docSnap.exists()) {
           setProduct({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          // Default mock data if ID not found
-          setProduct({
-            id: '1',
-            name: 'Cyberpunk Helmet v2',
-            price: 299,
-            description: 'A revolutionary wearable designed for the next era of personal security and style. 3D printed with impact-resistant carbon-fiber reinforced polymer.',
-            category: 'Wearables',
-            imageUrls: ['https://picsum.photos/seed/helmet/800/800'],
-            model3dUrl: '',
-            stock: 12,
-            rating: 4.8,
-            reviewsCount: 124,
-            variants: ['Standard', 'Matte Black', 'Neon Edition']
-          });
         }
 
         const wishlist = await getWishlist();
@@ -297,34 +282,9 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="flex-1 space-y-8">
-            {[
-              { user: "Kaelen_0x", rating: 5, date: "48h ago", comment: "The layer adhesion on this specific geometry is phenomenal. Used the Carbon-Fiber variant and it withstands extreme thermal stress." },
-              { user: "NeoVibe", rating: 4, date: "1w ago", comment: "Slight delay in logistics but the product integrity is as advertised. The matte finish looks incredibly stealthy." },
-              { user: "Synth_Lord", rating: 5, date: "2w ago", comment: "Essential construct for my modular workstation. 0.05mm precision confirmed via digital caliper scan." }
-            ].map((review, i) => (
-              <div key={i} className="p-10 bg-white/5 border border-white/5 rounded-[2.5rem] relative group hover:border-white/10 transition-all">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center text-cyan-400 font-black italic">
-                      {review.user[0]}
-                    </div>
-                    <div>
-                      <div className="text-sm font-black uppercase tracking-widest text-white">@{review.user}</div>
-                      <div className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{review.date}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, starI) => (
-                      <Star key={starI} className={`w-3 h-3 ${starI < review.rating ? 'text-cyan-400 fill-cyan-400' : 'text-zinc-800'}`} />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-white/40 leading-relaxed font-medium">"{review.comment}"</p>
-                <div className="absolute top-10 right-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Badge variant="outline" className="text-[8px] border-cyan-500/20 text-cyan-400 uppercase font-black tracking-widest">Verified manifest</Badge>
-                </div>
-              </div>
-            ))}
+            <div className="py-20 text-center border border-dashed border-white/10 rounded-[2.5rem]">
+              <p className="text-white/20 font-black uppercase text-[10px] tracking-widest">No telemetry logs yet preserved for this construct</p>
+            </div>
             <Button variant="ghost" className="w-full h-16 border border-white/5 rounded-2xl text-white/20 hover:text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]">
               Load more telemetry logs
             </Button>

@@ -29,17 +29,7 @@ export default function ShowcasePage() {
         const q = query(collection(db, 'showcase'), orderBy('createdAt', 'desc'), limit(12));
         const querySnapshot = await getDocs(q);
         const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShowcaseItem));
-        
-        if (list.length === 0) {
-          setItems([
-            { id: '1', userId: 'u1', imageUrl: 'https://picsum.photos/seed/p1/800/1000', comment: 'Finished my custom helmet print! The material quality is insane.', likes: ['1','2'], createdAt: '2026-05-01', username: 'Alex VR', avatarUrl: 'https://i.pravatar.cc/150?u=a' },
-            { id: '2', userId: 'u2', imageUrl: 'https://picsum.photos/seed/p2/800/800', comment: 'Low poly planters look great in my studio.', likes: ['3'], createdAt: '2026-05-02', username: 'Studio_Min', avatarUrl: 'https://i.pravatar.cc/150?u=b' },
-            { id: '3', userId: 'u3', imageUrl: 'https://picsum.photos/seed/p3/800/1200', comment: 'Testing the translucent resins for my lighting project.', likes: ['4','5','6'], createdAt: '2026-05-03', username: 'LuxDesign', avatarUrl: 'https://i.pravatar.cc/150?u=c' },
-            { id: '4', userId: 'u4', imageUrl: 'https://picsum.photos/seed/p4/800/900', comment: 'Just got the Titanium toggles. Indestructible!', likes: [], createdAt: '2026-05-04', username: 'GearHead', avatarUrl: 'https://i.pravatar.cc/150?u=d' },
-          ]);
-        } else {
-          setItems(list);
-        }
+        setItems(list);
       } catch (err) {
         console.error(err);
       } finally {
