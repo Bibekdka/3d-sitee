@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "mcp": "tsx mcp-server.ts",
     "start": "NODE_ENV=production tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
@@ -15,6 +16,7 @@
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.52.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@tailwindcss/vite": "^4.1.14",
