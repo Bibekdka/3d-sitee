@@ -101,7 +101,7 @@ export default function HomePage() {
               Next Generation Additive Manufacturing
             </div>
             <h1 className="text-[60px] md:text-[84px] leading-[0.95] font-black tracking-tighter uppercase italic">
-              FORGE THE <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-blue-400">IMPOSSIBLE.</span>
+              PRINT THE <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-blue-400">IMPOSSIBLE.</span>
             </h1>
             <p className="text-lg text-white/40 max-w-lg leading-relaxed font-medium">
               Access a global network of hyper-precision industrial printers. Upload, customize, and materialize complex geometries with proprietary carbon-alloy materials.
@@ -109,13 +109,13 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Link to="/shop">
                 <Button className="px-10 py-7 bg-white text-black font-bold flex items-center gap-3 rounded-xl hover:scale-105 transition-transform text-lg uppercase tracking-tight">
-                  Explore Marketplace
+                  EXPLORE COLLECTION
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/showcase">
                 <Button className="px-10 py-7 bg-black border border-white/20 text-white font-bold flex items-center gap-3 rounded-xl hover:bg-white/5 transition-colors text-lg uppercase tracking-tight">
-                  View 3D Demo
+                  BUY NOW
                 </Button>
               </Link>
             </div>

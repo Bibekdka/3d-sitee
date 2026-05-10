@@ -106,7 +106,10 @@ export default function AdminDashboard() {
         rating: Number(editingProduct.rating || 0),
         updatedAt: serverTimestamp(),
         createdAt: editingProduct.id ? undefined : serverTimestamp(),
-        imageUrls: editingProduct.imageUrls || ['https://picsum.photos/seed/product/800/800'],
+        imageUrls: (editingProduct.imageUrls && editingProduct.imageUrls.length > 0 && editingProduct.imageUrls[0] !== "") 
+          ? editingProduct.imageUrls 
+          : ['https://picsum.photos/seed/product/800/800'],
+        model3dUrl: editingProduct.model3dUrl || ''
       };
 
       await setDoc(productRef, payload, { merge: true });
@@ -285,7 +288,8 @@ export default function AdminDashboard() {
                       stock: 10,
                       rating: 4.5,
                       description: '',
-                      imageUrls: ['https://picsum.photos/seed/new/800/800']
+                      imageUrls: [''],
+                      model3dUrl: ''
                     });
                     setIsEditing(true);
                   }}
@@ -411,6 +415,26 @@ export default function AdminDashboard() {
                       type="number"
                       value={editingProduct?.stock} 
                       onChange={e => setEditingProduct({...editingProduct!, stock: Number(e.target.value)})}
+                      className="bg-white/5 border-white/10 rounded-xl"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Visual Assets (Comma-separated URLs)</label>
+                    <Input 
+                      value={editingProduct?.imageUrls?.join(', ')} 
+                      onChange={e => setEditingProduct({...editingProduct!, imageUrls: e.target.value.split(',').map(u => u.trim())})}
+                      placeholder="https://link1.jpg, https://link2.jpg"
+                      className="bg-white/5 border-white/10 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">3D Schema URL (.glb/.gltf)</label>
+                    <Input 
+                      value={editingProduct?.model3dUrl} 
+                      onChange={e => setEditingProduct({...editingProduct!, model3dUrl: e.target.value})}
+                      placeholder="https://assets.com/model.glb"
                       className="bg-white/5 border-white/10 rounded-xl"
                     />
                   </div>
