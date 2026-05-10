@@ -15,7 +15,9 @@ import {
   X, 
   ChevronDown,
   Star,
-  ArrowUpDown
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -51,6 +53,8 @@ interface Product {
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'rating';
 
+const ITEMS_PER_PAGE = 12;
+
 /**
  * Shop Page Component
  * Renders the marketplace where users can browse, filter, and add constructs to their cart.
@@ -64,6 +68,7 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0);
   const [sortOrder, setSortOrder] = useState<SortOption>('newest');
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const addItem = useCartStore((state) => state.addItem);
 
@@ -105,6 +110,9 @@ export default function ShopPage() {
    * Computes filtered and sorted products based on current UI state
    */
   const filteredAndSortedProducts = useMemo(() => {
+    // Reset to page 1 when criteria change
+    setCurrentPage(1);
+
     let result = products.filter(p => 
       (activeCategory === 'All' || p.category === activeCategory) &&
       (p.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -130,6 +138,16 @@ export default function ShopPage() {
 
     return result;
   }, [products, searchTerm, activeCategory, priceRange, minRating, sortOrder]);
+
+  /**
+   * Calculate paginated products
+   */
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedProducts, currentPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE);
 
   const resetFilters = () => {
     setActiveCategory('All');
@@ -344,10 +362,10 @@ export default function ShopPage() {
         PRODUCT GRID AREA
         Controls the display of all filtered construct cards.
       */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
         <AnimatePresence mode="popLayout">
-          {filteredAndSortedProducts.length > 0 ? (
-            filteredAndSortedProducts.map((product, idx) => (
+          {paginatedProducts.length > 0 ? (
+            paginatedProducts.map((product, idx) => (
               <motion.div
                 key={product.id}
                 layout
@@ -441,6 +459,54 @@ export default function ShopPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* 
+        PAGINATION CONTROLS
+        Provides navigation between product batches.
+      */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-8 border-t border-white/5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="w-12 h-12 rounded-xl text-white/40 hover:text-white hover:bg-white/5 disabled:opacity-30 border border-white/5"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+
+          <div className="flex items-center gap-1">
+            {[...Array(totalPages)].map((_, i) => {
+              const pageNum = i + 1;
+              return (
+                <Button
+                  key={pageNum}
+                  variant="ghost"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-12 h-12 rounded-xl text-[10px] font-black tracking-widest transition-all ${
+                    currentPage === pageNum 
+                      ? 'bg-cyan-400 text-black shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
+                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {String(pageNum).padStart(2, '0')}
+                </Button>
+              );
+            })}
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="w-12 h-12 rounded-xl text-white/40 hover:text-white hover:bg-white/5 disabled:opacity-30 border border-white/5"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
