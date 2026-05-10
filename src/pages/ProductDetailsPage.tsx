@@ -134,7 +134,10 @@ export default function ProductDetailsPage() {
   return (
     <div className="min-h-screen pt-32 pb-20 max-w-7xl mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-        {/* 3D Viewer Section (Left Side) */}
+        {/* 
+          3D VIEWER OR STATIC IMAGE FALLBACK (LEFT SIDE)
+          Controls the main visual representation of the product.
+        */}
         <div className="relative aspect-square lg:h-[600px] bg-zinc-900 rounded-[3rem] overflow-hidden border border-white/10">
           <div className="absolute top-8 left-8 z-10">
             {webGLSupported ? (
@@ -157,7 +160,11 @@ export default function ProductDetailsPage() {
             <Button variant="ghost" size="icon" className="bg-white/5 backdrop-blur-md rounded-full text-white hover:bg-white/10"><Share2 className="w-4 h-4" /></Button>
           </div>
           
-          {/* Main Visual Display */}
+          {/* 
+            MAIN VISUAL DISPLAY NODE:
+            Renders a 3D Interactive Canvas if WebGL is active.
+            Otherwise, it pulls the first product image from the 'imageUrls' array.
+          */}
           {webGLSupported ? (
             <Canvas dpr={[1, 2]} shadows camera={{ fov: 45 }}>
               <color attach="background" args={['#09090b']} />
@@ -172,6 +179,7 @@ export default function ProductDetailsPage() {
             </Canvas>
           ) : (
             <div className="w-full h-full p-12 flex items-center justify-center bg-zinc-950">
+              {/* STATIC FALLBACK IMAGE: Standard <img> tag used when 3D fails */}
               <motion.img 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -192,7 +200,10 @@ export default function ProductDetailsPage() {
           )}
         </div>
 
-        {/* Info & Configuration Section (Right Side) */}
+        {/* 
+           INFO & CONFIGURATION SECTION (RIGHT SIDE)
+           Controls text, price, and variant buttons.
+        */}
         <div className="flex flex-col justify-center">
           <motion.div
             initial={{ opacity: 0, x: 20 }}

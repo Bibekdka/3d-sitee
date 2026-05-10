@@ -131,7 +131,10 @@ export default function CartPage() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Main List Area */}
+        {/* 
+          MAIN LIST AREA 
+          Controls the scrolling list of items currently in the manifest.
+        */}
         <div className="lg:col-span-2 space-y-6">
           <AnimatePresence mode="popLayout">
             {items.map((item) => (
@@ -144,6 +147,7 @@ export default function CartPage() {
                 className="p-6 bg-white/5 border border-white/5 rounded-[2.5rem] flex flex-col sm:flex-row items-center gap-6 group hover:border-white/10 transition-colors"
               >
                 <div className="w-32 h-32 bg-zinc-900 rounded-3xl overflow-hidden shrink-0 border border-white/10 group-hover:border-cyan-500/30 transition-colors">
+                  {/* ITEM THUMBNAIL: Displays the small preview of the carted item */}
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -183,7 +187,10 @@ export default function CartPage() {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar Summary Area */}
+        {/* 
+           SIDEBAR SUMMARY AREA 
+           Controls totals, checkout initialization, and finalized transmission.
+        */}
         <aside>
           <div className="p-10 bg-zinc-950 border border-white/5 rounded-[3rem] sticky top-32 shadow-2xl backdrop-blur-md">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 mb-8 italic">Transmission Summary</h3>

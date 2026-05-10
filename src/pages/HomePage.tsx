@@ -80,9 +80,17 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* Hero Section */}
+      {/* 
+        HERO SECTION 
+        Controls the initial landing visuals including the 3D Canvas or Static Fallback.
+      */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 z-0">
+          {/* 
+            VISUAL BACKGROUND:
+            If WebGL is supported, it renders a high-performance 3D shape.
+            Otherwise, it uses a CSS-based static fallback.
+          */}
           {webGLSupported ? (
             <Canvas>
               <PerspectiveCamera makeDefault position={[0, 0, 5]} />
@@ -156,7 +164,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* AI Recommendations Section */}
+      {/* 
+        AI RECOMMENDATIONS SECTION 
+        Controls the Gemini-powered intelligence display.
+      */}
       <section className="py-20 relative z-10 px-10">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-xl relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-700">
@@ -202,7 +213,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Showcase Carousel Section */}
+      {/* 
+        SHOWCASE CAROUSEL SECTION 
+        Renders a dynamic slider of community-created items.
+      */}
       {showcaseItems.length > 0 && (
         <section className="py-24 relative z-10">
           <div className="max-w-7xl mx-auto px-10">
@@ -239,6 +253,10 @@ export default function HomePage() {
               >
                 {showcaseItems.map((item) => (
                   <div key={item.id} className="min-w-full h-full relative group">
+                    {/* 
+                      SHOWCASE IMAGE:
+                      This renders the community-submitted image for each slide.
+                    */}
                     <img 
                       src={item.imageUrl} 
                       alt={item.comment} 
@@ -284,7 +302,10 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Features */}
+      {/* 
+        SYSTEM PROTOCOLS (FEATURES SECTION) 
+        Controls the fixed feature highlight cards.
+      */}
       <section className="py-32 bg-transparent relative z-10">
         <div className="max-w-7xl mx-auto px-10">
           <div className="mb-20">

@@ -340,7 +340,10 @@ export default function ShopPage() {
         </p>
       </div>
 
-      {/* Product Grid Area */}
+      {/* 
+        PRODUCT GRID AREA
+        Controls the display of all filtered construct cards.
+      */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         <AnimatePresence mode="popLayout">
           {filteredAndSortedProducts.length > 0 ? (
@@ -354,8 +357,12 @@ export default function ShopPage() {
                 transition={{ duration: 0.3, delay: idx * 0.05 }}
                 className="group relative bg-white/5 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-cyan-500/30 transition-all duration-500 backdrop-blur-sm shadow-xl"
               >
-                {/* Visual Preview Node */}
+                {/* 
+                  VISUAL PREVIEW NODE 
+                  Renders the main product image.
+                */}
                 <div className="aspect-square overflow-hidden relative border-b border-white/5 bg-zinc-900/40">
+                  {/* MAIN IMAGE: This is where the primary product photo is displayed */}
                   <img 
                     src={product.imageUrls[0]} 
                     alt={product.name}
@@ -392,7 +399,10 @@ export default function ShopPage() {
                   </div>
                 </div>
                 
-                {/* Product Metadata */}
+                {/* 
+                  PRODUCT METADATA 
+                  Controls text labels and rating markers.
+                */}
                 <div className="p-10">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 italic font-mono">{product.category}</span>
