@@ -7,9 +7,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Star, Share2, Heart, RotateCcw, ShieldCheck, Truck, MessageSquare, Send } from 'lucide-react';
+import { ShoppingCart, Star, Share2, Heart, RotateCcw, ShieldCheck, Truck, MessageSquare, Send, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { addToWishlist, removeFromWishlist, getWishlist } from '@/services/wishlistService';
+import { isWebGLAvailable } from '@/lib/webgl-check';
 
 function ModelViewer({ url }: { url: string }) {
   // If no URL, use a placeholder sphere
@@ -35,6 +36,7 @@ export default function ProductDetailsPage() {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [webGLSupported, setWebGLSupported] = useState(true);
 
   const finishes = ['Matte Noir', 'Gloss Cobalt', 'Brushed Steel', 'Neon Pulse'];
 
@@ -55,6 +57,7 @@ export default function ProductDetailsPage() {
   };
 
   useEffect(() => {
+    setWebGLSupported(isWebGLAvailable());
     const fetchProduct = async () => {
       try {
         const docRef = doc(db, 'products', id!);
@@ -98,7 +101,13 @@ export default function ProductDetailsPage() {
         {/* 3D Viewer Section */}
         <div className="relative aspect-square lg:h-[600px] bg-zinc-900 rounded-[3rem] overflow-hidden border border-white/10">
           <div className="absolute top-8 left-8 z-10">
-            <Badge className="bg-cyan-500 text-black border-none px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">3D Preview Active</Badge>
+            {webGLSupported ? (
+              <Badge className="bg-cyan-500 text-black border-none px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">3D Preview Active</Badge>
+            ) : (
+              <Badge variant="outline" className="border-red-500/20 text-red-500 bg-red-500/5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <AlertTriangle className="w-3 h-3" /> Visual Fallback
+              </Badge>
+            )}
           </div>
           <div className="absolute top-8 right-8 z-10 flex gap-2">
             <Button 
@@ -112,24 +121,38 @@ export default function ProductDetailsPage() {
             <Button variant="ghost" size="icon" className="bg-white/5 backdrop-blur-md rounded-full text-white hover:bg-white/10"><Share2 className="w-4 h-4" /></Button>
           </div>
           
-          <Canvas dpr={[1, 2]} shadows camera={{ fov: 45 }}>
-            <color attach="background" args={['#09090b']} />
-            <Suspense fallback={null}>
-              <PresentationControls speed={1.5} global zoom={0.5} polar={[-0.1, Math.PI / 4]}>
-                <Stage environment="city" intensity={0.6}>
-                  <ModelViewer url={product.model3dUrl} />
-                </Stage>
-              </PresentationControls>
-            </Suspense>
-            <OrbitControls enablePan={false} enableZoom={true} />
-          </Canvas>
-          
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
-            <div className="p-4 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl flex items-center gap-3">
-              <RotateCcw className="w-4 h-4 text-cyan-500 animate-spin-slow shadow-[0_0_10px_cyan]" />
-              <span className="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400">Rotate View</span>
+          {webGLSupported ? (
+            <Canvas dpr={[1, 2]} shadows camera={{ fov: 45 }}>
+              <color attach="background" args={['#09090b']} />
+              <Suspense fallback={null}>
+                <PresentationControls speed={1.5} global zoom={0.5} polar={[-0.1, Math.PI / 4]}>
+                  <Stage environment="city" intensity={0.6}>
+                    <ModelViewer url={product.model3dUrl} />
+                  </Stage>
+                </PresentationControls>
+              </Suspense>
+              <OrbitControls enablePan={false} enableZoom={true} />
+            </Canvas>
+          ) : (
+            <div className="w-full h-full p-12 flex items-center justify-center bg-zinc-950">
+              <motion.img 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                src={product.imageUrls?.[0] || 'https://picsum.photos/seed/fallback/800/800'} 
+                alt={product.name}
+                className="w-full h-full object-contain rounded-2xl"
+              />
             </div>
-          </div>
+          )}
+          
+          {webGLSupported && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
+              <div className="p-4 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl flex items-center gap-3">
+                <RotateCcw className="w-4 h-4 text-cyan-500 animate-spin-slow shadow-[0_0_10px_cyan]" />
+                <span className="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400">Rotate View</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Info Section */}

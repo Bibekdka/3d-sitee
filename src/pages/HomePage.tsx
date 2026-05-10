@@ -3,11 +3,12 @@ import { OrbitControls, Float, MeshDistortMaterial, Sphere, PerspectiveCamera } 
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Box, Zap, ShoppingBag, Cpu, Sparkles, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Box, Zap, ShoppingBag, Cpu, Sparkles, Shield, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { getProductRecommendations } from '@/services/geminiService';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { isWebGLAvailable } from '@/lib/webgl-check';
 
 interface ShowcaseItem {
   id: string;
@@ -37,8 +38,10 @@ export default function HomePage() {
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [webGLSupported, setWebGLSupported] = useState(true);
 
   useEffect(() => {
+    setWebGLSupported(isWebGLAvailable());
     async function fetchRecs() {
       setLoadingAI(true);
       try {
@@ -80,14 +83,29 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 z-0">
-          <Canvas>
-            <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
-            <spotLight position={[-10, -10, -10]} angle={0.15} penumbra={1} />
-            <AnimatedShape />
-            <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
-          </Canvas>
+          {webGLSupported ? (
+            <Canvas>
+              <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
+              <spotLight position={[-10, -10, -10]} angle={0.15} penumbra={1} />
+              <AnimatedShape />
+              <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
+            </Canvas>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-950 relative overflow-hidden">
+              {/* Static Fallback for WebGL errors */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/20 via-black to-blue-950/20 opacity-50" />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative z-10 w-96 h-96 rounded-full bg-cyan-400/10 blur-[100px]"
+              />
+              <div className="absolute bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] uppercase font-black tracking-widest text-red-400 backdrop-blur-md">
+                <AlertTriangle className="w-3 h-3" /> Hardware Acceleration Offline
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-10 w-full grid grid-cols-12 gap-6">

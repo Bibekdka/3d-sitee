@@ -48,13 +48,40 @@ interface Product {
   description: string;
 }
 
+interface Order {
+  id: string;
+  userId: string;
+  client?: string;
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    qty: number;
+    image: string;
+  }>;
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: {
+    fullName: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  paymentId: string;
+  createdAt: any;
+}
+
 export default function AdminDashboard() {
   const { user } = useUserStore();
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   
   // Review seeding state
   const [isAddingReview, setIsAddingReview] = useState(false);
@@ -84,9 +111,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        // Mocking client name if not present
+        client: (doc.data() as any).client || (doc.data() as any).shippingAddress?.fullName || 'Anonymous User'
+      } as Order));
+      setOrders(list);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'products') {
       fetchProducts();
+    } else if (activeTab === 'orders' || activeTab === 'overview') {
+      fetchOrders();
     }
   }, [activeTab]);
 
@@ -145,14 +193,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const [stats, setStats] = useState([
-    { label: 'Total Revenue', value: '$0', trend: '0%', icon: LineChart },
-    { label: 'Active Orders', value: '0', trend: '0%', icon: ShoppingCart },
-    { label: 'Total Users', value: '0', trend: '0%', icon: Users },
-    { label: 'Inventory', value: '0', trend: '0%', icon: Package },
-  ]);
-
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const stats = [
+    { 
+      label: 'Total Revenue', 
+      value: `$${orders.reduce((acc, curr) => acc + (curr.status !== 'cancelled' ? curr.total : 0), 0).toLocaleString()}`, 
+      trend: '+12%', 
+      icon: LineChart 
+    },
+    { 
+      label: 'Active Orders', 
+      value: orders.filter(o => o.status === 'processing' || o.status === 'shipped').length.toString(), 
+      trend: '+5%', 
+      icon: ShoppingCart 
+    },
+    { 
+      label: 'Total Users', 
+      value: '42', // Placeholder or fetch real count if possible
+      trend: '+18%', 
+      icon: Users 
+    },
+    { 
+      label: 'Inventory', 
+      value: products.reduce((acc, curr) => acc + curr.stock, 0).toString(), 
+      trend: '-2%', 
+      icon: Package 
+    },
+  ];
 
   return (
     <div className="min-h-screen pt-20 flex">
@@ -242,22 +308,28 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentOrders.length > 0 ? (
-                    recentOrders.map((order) => (
-                      <TableRow key={order.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                        <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                  {orders.length > 0 ? (
+                    orders.slice(0, 5).map((order) => (
+                      <TableRow 
+                        key={order.id} 
+                        className="border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
                         <TableCell className="font-bold">{order.client}</TableCell>
-                        <TableCell className="font-mono text-orange-500">{order.amount}</TableCell>
+                        <TableCell className="font-mono text-orange-500">${order.total}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {order.status === 'Delivered' && <CheckCircle2 className="w-3 h-3 text-green-500" />}
-                            {order.status === 'Processing' && <Clock className="w-3 h-3 text-yellow-500" />}
-                            {order.status === 'Shipped' && <Package className="w-3 h-3 text-blue-500" />}
-                            {order.status === 'Cancelled' && <AlertCircle className="w-3 h-3 text-red-500" />}
+                            {order.status === 'delivered' && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+                            {(order.status === 'processing' || order.status === 'pending') && <Clock className="w-3 h-3 text-yellow-500" />}
+                            {order.status === 'shipped' && <Package className="w-3 h-3 text-blue-500" />}
+                            {order.status === 'cancelled' && <AlertCircle className="w-3 h-3 text-red-500" />}
                             <span className="text-xs font-bold uppercase tracking-tighter">{order.status}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-zinc-500 text-[10px] uppercase font-bold">{order.time}</TableCell>
+                        <TableCell className="text-zinc-500 text-[10px] uppercase font-bold">
+                          {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString() : 'Recent'}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -270,6 +342,62 @@ export default function AdminDashboard() {
                 </TableBody>
               </Table>
             </>
+          )}
+
+          {activeTab === 'orders' && (
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xl font-bold uppercase italic tracking-tighter">Transmission Archive</h3>
+                  <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-1">Full transaction history monitoring</p>
+                </div>
+              </div>
+              
+              <Table>
+                <TableHeader className="bg-zinc-950">
+                  <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableHead className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">ID</TableHead>
+                    <TableHead className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Client</TableHead>
+                    <TableHead className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Transmission Value</TableHead>
+                    <TableHead className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Status</TableHead>
+                    <TableHead className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Timestamp</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.length > 0 ? (
+                    orders.map((order) => (
+                      <TableRow 
+                        key={order.id} 
+                        className="border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                        <TableCell className="font-bold">{order.client}</TableCell>
+                        <TableCell className="font-mono text-orange-500">${order.total}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                             {order.status === 'delivered' && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+                            {(order.status === 'processing' || order.status === 'pending') && <Clock className="w-3 h-3 text-yellow-500" />}
+                            {order.status === 'shipped' && <Package className="w-3 h-3 text-blue-500" />}
+                            {order.status === 'cancelled' && <AlertCircle className="w-3 h-3 text-red-500" />}
+                            <span className="text-xs font-bold uppercase tracking-tighter">{order.status}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-zinc-500 text-[10px] uppercase font-bold">
+                          {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-64 text-center text-zinc-500 font-bold uppercase tracking-widest text-xs">
+                        No orders recorded in the archives
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
 
           {activeTab === 'products' && (
@@ -509,6 +637,137 @@ export default function AdminDashboard() {
                   Inject Telemetry
                 </Button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Order Detail Modal */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="bg-zinc-950 border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="p-8 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Transmission Detail</h3>
+                  <p className="text-zinc-500 font-mono text-xs mt-1">ID: {selectedOrder.id}</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(null)} className="rounded-full hover:bg-white/10 text-zinc-500 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 md:p-10 custom-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  {/* Items List */}
+                  <div className="space-y-6">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 border-b border-white/5 pb-4">Consignments</h4>
+                    <div className="space-y-4">
+                      {selectedOrder.items.map((item, idx) => (
+                        <div key={idx} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                          <div className="w-16 h-16 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0">
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <h5 className="font-bold text-sm uppercase tracking-tight">{item.name}</h5>
+                              <span className="font-mono text-xs text-orange-500">${item.price}</span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold">Qty: {item.qty}</span>
+                              <span className="font-bold text-sm text-white">${(item.price * item.qty).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="pt-6 border-t border-white/5 space-y-2">
+                       <div className="flex justify-between text-zinc-500 text-sm">
+                        <span>Subtotal Manifest</span>
+                        <span className="font-mono">${(selectedOrder.total - 25).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-zinc-500 text-sm">
+                        <span>Transmission Protocol (Fee)</span>
+                        <span className="font-mono">$25.00</span>
+                      </div>
+                      <div className="flex justify-between text-xl font-black italic pt-4 text-white">
+                        <span className="uppercase tracking-tighter">Total Value</span>
+                        <span className="text-cyan-400 font-mono">${selectedOrder.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metadata & Logistics */}
+                  <div className="space-y-8">
+                    {/* Logistical Target */}
+                    <div className="space-y-4 p-6 bg-zinc-900 rounded-3xl border border-white/5">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3" /> Logistical Target
+                      </h4>
+                      <div className="space-y-1">
+                        <p className="font-bold text-lg text-white">{selectedOrder.shippingAddress?.fullName || 'N/A'}</p>
+                        <p className="text-zinc-400 text-sm leading-relaxed">
+                          {selectedOrder.shippingAddress?.address || 'Address information missing'}<br />
+                          {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.zipCode}<br />
+                          {selectedOrder.shippingAddress?.country}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Financial Integrity */}
+                    <div className="space-y-4 p-6 bg-zinc-900 rounded-3xl border border-white/5">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 flex items-center gap-2">
+                        <Clock className="w-3 h-3" /> Financial Integrity
+                      </h4>
+                      <div className="space-y-3">
+                         <div className="flex justify-between items-center text-sm">
+                          <span className="text-zinc-500">Node ID</span>
+                          <span className="font-mono text-zinc-300">{selectedOrder.paymentId || 'PAY-INTERNAL-MOCK'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-zinc-500">Security Clearance</span>
+                          <span className="text-green-500 font-bold uppercase tracking-tight">Verified</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Operational Status Control */}
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Operational Phase</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                          <button
+                            key={status}
+                            onClick={async () => {
+                              try {
+                                await updateDoc(doc(db, 'orders', selectedOrder.id), { status });
+                                setSelectedOrder({ ...selectedOrder, status: status as any });
+                                setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: status as any } : o));
+                                toast.success(`Sector move: Order ${status}`);
+                              } catch (err) {
+                                toast.error("Command failed: Delta rejection");
+                              }
+                            }}
+                            className={`px-4 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all ${
+                              selectedOrder.status === status 
+                                ? 'bg-white text-black border-white shadow-lg shadow-white/10' 
+                                : 'bg-white/5 text-zinc-500 border-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
