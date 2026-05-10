@@ -36,6 +36,7 @@ import { Separator } from '@/components/ui/separator';
 import { addToWishlist, removeFromWishlist, getWishlist } from '@/services/wishlistService';
 import { toast } from 'sonner';
 import { Heart } from 'lucide-react';
+import { useCartStore } from '@/store/cartStore';
 
 interface Product {
   id: string;
@@ -50,6 +51,10 @@ interface Product {
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'rating';
 
+/**
+ * Shop Page Component
+ * Renders the marketplace where users can browse, filter, and add constructs to their cart.
+ */
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +64,13 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0);
   const [sortOrder, setSortOrder] = useState<SortOption>('newest');
   const [wishlist, setWishlist] = useState<string[]>([]);
+  
+  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
+    /**
+     * Fetches current user's wishlist IDs
+     */
     const fetchWishlistIds = async () => {
       try {
         const ids = await getWishlist();
@@ -71,6 +81,9 @@ export default function ShopPage() {
     };
     fetchWishlistIds();
 
+    /**
+     * Fetches all products from the catalog
+     */
     const fetchProducts = async () => {
       try {
         const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(50));
@@ -78,7 +91,7 @@ export default function ShopPage() {
         const productList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setProducts(productList);
       } catch (err) {
-        console.error(err);
+        console.error("Catalog access failure:", err);
       } finally {
         setLoading(false);
       }
@@ -88,6 +101,9 @@ export default function ShopPage() {
 
   const categories = ['All', 'Wearables', 'Home', 'Lighting', 'Tools', 'Jewelry', 'Accessories'];
 
+  /**
+   * Computes filtered and sorted products based on current UI state
+   */
   const filteredAndSortedProducts = useMemo(() => {
     let result = products.filter(p => 
       (activeCategory === 'All' || p.category === activeCategory) &&
@@ -108,7 +124,7 @@ export default function ShopPage() {
         break;
       case 'newest':
       default:
-        // Already sorted by newest from Firestore or default
+        // Firestore handles newest by default via query
         break;
     }
 
@@ -122,6 +138,9 @@ export default function ShopPage() {
     setSearchTerm('');
   };
 
+  /**
+   * Toggles an item in/out of the user's wishlist
+   */
   const handleToggleWishlist = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -140,12 +159,35 @@ export default function ShopPage() {
     }
   };
 
+  /**
+   * Quick-add a product to the cart with default configuration
+   */
+  const handleQuickAdd = (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      qty: 1,
+      image: product.imageUrls[0],
+      variant: 'Standard',
+      finish: 'Matte Noir'
+    });
+    
+    toast.success(`${product.name} added to cart`, {
+      description: "Default configuration applied."
+    });
+  };
+
   const activeFilterCount = (activeCategory !== 'All' ? 1 : 0) + 
                              (priceRange[0] > 0 || priceRange[1] < 500 ? 1 : 0) + 
                              (minRating > 0 ? 1 : 0);
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-10 max-w-7xl mx-auto relative z-10">
+      {/* Page Header Area */}
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12 mb-16 items-start lg:items-end">
         <div className="lg:col-span-7">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-[10px] uppercase tracking-[0.2em] font-bold text-cyan-400 mb-6 font-mono">
@@ -155,6 +197,7 @@ export default function ShopPage() {
           <p className="text-white/40 max-w-lg leading-relaxed font-medium">Premium 3D printed constructs, designed by visionaries, manufactured for reality with precision metrics.</p>
         </div>
         
+        {/* Search & Main Controls */}
         <div className="lg:col-span-5 w-full flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -182,13 +225,14 @@ export default function ShopPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Filter Sheet */}
             <Sheet>
               <SheetTrigger render={
                 <Button variant="outline" className="border-white/10 bg-white/5 h-12 rounded-xl px-4 flex items-center gap-2 text-white/60 hover:text-white hover:bg-white/10 relative">
                   <SlidersHorizontal className="w-4 h-4" />
                   <span className="hidden sm:inline">Filters</span>
                   {activeFilterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full text-[10px] text-black font-bold flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full text-[10px] text-black font-bold flex items-center justify-center border-2 border-zinc-950">
                       {activeFilterCount}
                     </span>
                   )}
@@ -203,7 +247,7 @@ export default function ShopPage() {
                 <div className="space-y-12">
                   {/* Category Filter */}
                   <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Core Categories</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 font-mono">Core Categories</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {categories.map(cat => (
                         <button
@@ -224,7 +268,7 @@ export default function ShopPage() {
                   {/* Price Slider */}
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Price Manifest ($)</h3>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 font-mono">Price Manifest ($)</h3>
                       <span className="text-xs font-mono text-white/60">${priceRange[0]} - ${priceRange[1]}</span>
                     </div>
                     <Slider
@@ -239,7 +283,7 @@ export default function ShopPage() {
 
                   {/* Rating Filter */}
                   <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Minimum Integrity (Rating)</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 font-mono">Minimum Integrity</h3>
                     <div className="flex gap-2">
                       {[0, 2, 3, 4].map((rating) => (
                         <button
@@ -273,6 +317,7 @@ export default function ShopPage() {
         </div>
       </div>
 
+      {/* Horizontal Category Quick-Bar */}
       <div className="flex flex-wrap gap-3 mb-12 overflow-x-auto pb-4 no-scrollbar">
         {categories.map(cat => (
           <button
@@ -291,10 +336,11 @@ export default function ShopPage() {
 
       <div className="mb-8 flex items-center justify-between">
         <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
-          Showing {filteredAndSortedProducts.length} of {products.length} entries matching current parameters
+          Scanning Index: {filteredAndSortedProducts.length} constructs found within parameters
         </p>
       </div>
 
+      {/* Product Grid Area */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         <AnimatePresence mode="popLayout">
           {filteredAndSortedProducts.length > 0 ? (
@@ -306,8 +352,9 @@ export default function ShopPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: idx * 0.05 }}
-                className="group relative bg-white/5 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-cyan-500/30 transition-all duration-500 backdrop-blur-sm"
+                className="group relative bg-white/5 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-cyan-500/30 transition-all duration-500 backdrop-blur-sm shadow-xl"
               >
+                {/* Visual Preview Node */}
                 <div className="aspect-square overflow-hidden relative border-b border-white/5 bg-zinc-900/40">
                   <img 
                     src={product.imageUrls[0]} 
@@ -315,27 +362,40 @@ export default function ShopPage() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  
+                  {/* Action Overlay */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                     <Button 
                       onClick={(e) => handleToggleWishlist(product.id, e)}
+                      title="Reserve Unit"
                       className={`rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 ${wishlist.includes(product.id) ? 'bg-red-500 text-white' : 'bg-white text-black hover:bg-red-500 hover:text-white'}`}
                     >
                       <Heart className={`w-6 h-6 ${wishlist.includes(product.id) ? 'fill-current' : ''}`} />
                     </Button>
                     <Link to={`/product/${product.id}`}>
-                      <Button className="bg-white text-black hover:bg-cyan-400 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100">
+                      <Button title="Analyze Detailed Specs" className="bg-white text-black hover:bg-cyan-400 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100">
                         <Eye className="w-6 h-6" />
                       </Button>
                     </Link>
+                    <Button 
+                      onClick={(e) => handleQuickAdd(product, e)}
+                      title="Initialize Assembly"
+                      className="bg-white text-black hover:bg-orange-500 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 hover:text-white"
+                    >
+                      <ShoppingCart className="w-6 h-6" />
+                    </Button>
                   </div>
-                  <div className="absolute top-6 right-6 font-mono text-xl font-bold text-white tracking-tighter bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10">
+                  
+                  {/* Floating Price Indicator */}
+                  <div className="absolute top-6 right-6 font-mono text-xl font-bold text-white tracking-tighter bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
                     ${product.price}
                   </div>
                 </div>
                 
+                {/* Product Metadata */}
                 <div className="p-10">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 italic">{product.category}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 italic font-mono">{product.category}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_5px_cyan]" />
                       <span className="text-xs font-mono font-bold text-white/60">{product.rating}</span>
@@ -344,11 +404,12 @@ export default function ShopPage() {
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-2 group-hover:text-cyan-400 transition-colors leading-none">
                     {product.name}
                   </h3>
-                  <p className="text-white/30 text-sm font-medium">Industrial grade composite manifest.</p>
+                  <p className="text-white/30 text-sm font-medium">Materialization ready: Premium carbon-composite.</p>
                 </div>
               </motion.div>
             ))
           ) : (
+            /* Empty State for Filters */
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -358,13 +419,13 @@ export default function ShopPage() {
                 <X className="w-8 h-8 text-white/20" />
               </div>
               <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-2">No Constructs Found</h3>
-              <p className="text-white/40 font-medium">Re-adjust your filtering parameters to re-scan the grid.</p>
+              <p className="text-white/40 font-medium tracking-wide">Adjust search parameters to find matching archived entries.</p>
               <Button 
                 variant="link" 
                 className="text-cyan-400 uppercase tracking-[0.2em] font-black text-[10px] mt-4"
                 onClick={resetFilters}
               >
-                Clear All Search Buffers
+                Clear All Filter Buffers
               </Button>
             </motion.div>
           )}

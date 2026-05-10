@@ -4,12 +4,21 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingCart, User, Menu, X, Rocket, Box, Users, Search, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUserStore } from '@/store/userStore';
+import { useCartStore } from '@/store/cartStore';
 
+/**
+ * Global Header Component
+ * Provides navigation and quick access to cart, wishlist, and user profile.
+ */
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useUserStore();
   const location = useLocation();
+  
+  // Retrieve cart items to calculate badge count
+  const cartItems = useCartStore((state) => state.items);
+  const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -71,7 +80,11 @@ export default function Header() {
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="text-white/50 hover:text-white relative hover:bg-white/5 rounded-full">
                 <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 text-[10px] flex items-center justify-center rounded-full text-black font-bold">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 text-[10px] flex items-center justify-center rounded-full text-black font-bold">
+                    {cartCount}
+                  </span>
+                )}
               </Button>
             </Link>
             {user ? (
@@ -130,7 +143,7 @@ export default function Header() {
               className="flex items-center gap-4 text-lg font-medium"
             >
               <ShoppingCart className="w-5 h-5 text-orange-500" />
-              Cart (0)
+              Cart ({cartCount})
             </Link>
             <Link 
               to={user ? "/profile" : "/auth"} 

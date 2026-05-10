@@ -11,23 +11,30 @@ import { ShoppingCart, Star, Share2, Heart, RotateCcw, ShieldCheck, Truck, Messa
 import { toast } from 'sonner';
 import { addToWishlist, removeFromWishlist, getWishlist } from '@/services/wishlistService';
 import { isWebGLAvailable } from '@/lib/webgl-check';
+import { useCartStore } from '@/store/cartStore';
 
+/**
+ * 3D Model Viewer Component
+ * Renders a placeholder or the actual .glb/.gltf model if supported.
+ */
 function ModelViewer({ url }: { url: string }) {
-  // If no URL, use a placeholder sphere
-  if (!url) return <mesh><sphereGeometry /><meshStandardMaterial color="#f97316" /></mesh>;
+  // If no URL or in demo mode, use a placeholder geometric shape
+  if (!url) return <mesh><sphereGeometry /><meshStandardMaterial color="#22d3ee" wireframe /></mesh>;
   
-  // In a real app we'd use useGLTF(url)
-  // For demo, we'll show a fallback but structure it correctly.
+  // NOTE: Real implementation would use useGLTF(url)
+  // For this environment, we use a high-end wireframe placeholder for performance stability
   return (
     <mesh scale={2}>
       <octahedronGeometry />
-      <meshStandardMaterial color="#f97316" wireframe />
+      <meshStandardMaterial color="#22d3ee" wireframe />
     </mesh>
   );
 }
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
+  const addItem = useCartStore((state) => state.addItem);
+  
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState('Standard');
@@ -40,11 +47,14 @@ export default function ProductDetailsPage() {
 
   const finishes = ['Matte Noir', 'Gloss Cobalt', 'Brushed Steel', 'Neon Pulse'];
 
+  /**
+   * Submits a user review (Simulated API call)
+   */
   const handleSubmitReview = async () => {
     if (!newReviewComment.trim()) return toast.error("Report content required");
     setSubmittingReview(true);
     try {
-      // Simulation of submission
+      // Simulation of submission to neural link
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success("Manifest report submitted to neural link");
       setNewReviewComment('');
@@ -56,8 +66,31 @@ export default function ProductDetailsPage() {
     }
   };
 
+  /**
+   * Adds the current configured product to the shopping cart
+   */
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      qty: 1,
+      image: product.imageUrls?.[0] || 'https://picsum.photos/seed/product/400/400',
+      variant: selectedVariant,
+      finish: selectedFinish
+    });
+    
+    toast.success(`${product.name} added to cart!`, {
+      description: `Configuration: ${selectedVariant} / ${selectedFinish}`
+    });
+  };
+
   useEffect(() => {
+    // Detect WebGL capability on mount
     setWebGLSupported(isWebGLAvailable());
+    
     const fetchProduct = async () => {
       try {
         const docRef = doc(db, 'products', id!);
@@ -67,10 +100,12 @@ export default function ProductDetailsPage() {
           setProduct({ id: docSnap.id, ...docSnap.data() });
         }
 
+        // Check if item is already in wishlist
         const wishlist = await getWishlist();
         setIsInWishlist(wishlist.includes(id!));
       } catch (err) {
-        console.error(err);
+        console.error("Fetch Failure:", err);
+        toast.error("Archive Access Denied: Protocol Error");
       } finally {
         setLoading(false);
       }
@@ -93,12 +128,13 @@ export default function ProductDetailsPage() {
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-orange-500 font-bold uppercase tracking-widest animate-pulse">Scanning Archive...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center text-cyan-400 font-bold uppercase tracking-widest animate-pulse font-mono">Scanning Archive...</div>;
+  if (!product) return <div className="h-screen flex items-center justify-center text-red-500 font-bold uppercase">Construct Not Found</div>;
 
   return (
     <div className="min-h-screen pt-32 pb-20 max-w-7xl mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-        {/* 3D Viewer Section */}
+        {/* 3D Viewer Section (Left Side) */}
         <div className="relative aspect-square lg:h-[600px] bg-zinc-900 rounded-[3rem] overflow-hidden border border-white/10">
           <div className="absolute top-8 left-8 z-10">
             {webGLSupported ? (
@@ -121,6 +157,7 @@ export default function ProductDetailsPage() {
             <Button variant="ghost" size="icon" className="bg-white/5 backdrop-blur-md rounded-full text-white hover:bg-white/10"><Share2 className="w-4 h-4" /></Button>
           </div>
           
+          {/* Main Visual Display */}
           {webGLSupported ? (
             <Canvas dpr={[1, 2]} shadows camera={{ fov: 45 }}>
               <color attach="background" args={['#09090b']} />
@@ -155,7 +192,7 @@ export default function ProductDetailsPage() {
           )}
         </div>
 
-        {/* Info Section */}
+        {/* Info & Configuration Section (Right Side) */}
         <div className="flex flex-col justify-center">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -173,36 +210,39 @@ export default function ProductDetailsPage() {
             <div className="flex items-center gap-6 mb-8">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-cyan-400 fill-cyan-400' : 'text-zinc-700'}`} />
+                  <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating || 4.5) ? 'text-cyan-400 fill-cyan-400' : 'text-zinc-700'}`} />
                 ))}
               </div>
-              <span className="text-zinc-500 font-bold text-sm underline">{product.reviewsCount} Reviews</span>
-              <Badge variant="outline" className="border-green-500/20 text-green-500 bg-green-500/5 px-3 py-1">In Stock</Badge>
+              <span className="text-zinc-500 font-bold text-sm underline">{(product.reviewsCount || 0)} Reviews</span>
+              <Badge variant="outline" className="border-green-500/20 text-green-500 bg-green-500/5 px-3 py-1">Ready for Transmission</Badge>
             </div>
 
             <p className="text-xl text-white/40 leading-relaxed mb-10 font-medium">
-              {product.description}
+              {product.description || "A master-grade construction utilizes carbon-infused composites for maximum structural integrity and aerospace-grade aesthetics."}
             </p>
 
+            {/* Customization Options */}
             <div className="space-y-8 mb-12">
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 mb-4 font-mono">Structural Variant</h3>
-                <div className="flex flex-wrap gap-3">
-                  {product.variants.map((v: string) => (
-                    <button
-                      key={v}
-                      onClick={() => setSelectedVariant(v)}
-                      className={`px-6 h-11 rounded-xl text-[10px] font-black border transition-all uppercase tracking-[0.2em] ${
-                        selectedVariant === v 
-                          ? 'border-cyan-400 text-cyan-400 bg-cyan-400/5 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
-                          : 'border-white/5 text-white/30 hover:border-white/20'
-                      }`}
-                    >
-                      {v}
-                    </button>
-                  ))}
+              {product.variants && product.variants.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 mb-4 font-mono">Structural Variant</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {product.variants.map((v: string) => (
+                      <button
+                        key={v}
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-6 h-11 rounded-xl text-[10px] font-black border transition-all uppercase tracking-[0.2em] ${
+                          selectedVariant === v 
+                            ? 'border-cyan-400 text-cyan-400 bg-cyan-400/5 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
+                            : 'border-white/5 text-white/30 hover:border-white/20'
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 mb-4 font-mono">Aesthetic Finish</h3>
@@ -224,27 +264,33 @@ export default function ProductDetailsPage() {
               </div>
             </div>
 
+            {/* Price & Primary Action */}
             <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="text-5xl font-black italic text-white tracking-widest font-mono">${product.price}</div>
-              <Button size="lg" className="flex-1 w-full bg-cyan-400 hover:bg-white text-black h-16 rounded-2xl md:rounded-full text-lg font-black uppercase tracking-widest shadow-xl shadow-cyan-400/20 group transition-all">
-                Add to Cart
+              <div className="text-5xl font-black italic text-white tracking-widest font-mono text-cyan-100">${product.price}</div>
+              <Button 
+                onClick={handleAddToCart}
+                size="lg" 
+                className="flex-1 w-full bg-cyan-400 hover:bg-white text-black h-16 rounded-2xl md:rounded-full text-lg font-black uppercase tracking-widest shadow-xl shadow-cyan-400/20 group transition-all"
+              >
+                Assemble to Cart
                 <ShoppingCart className="ml-3 group-hover:scale-110 transition-transform" />
               </Button>
             </div>
 
+            {/* Certifications */}
             <div className="grid grid-cols-2 gap-4 mt-12 pt-12 border-t border-white/5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-cyan-400 border border-white/10"><Truck className="w-5 h-5" /></div>
                 <div>
-                  <div className="text-[10px] uppercase font-black tracking-widest text-white/30">Global Shipping</div>
-                  <div className="text-xs font-bold">Fast transmission</div>
+                  <div className="text-[10px] uppercase font-black tracking-widest text-white/30">Sub-Orbital Shipping</div>
+                  <div className="text-xs font-bold">Protocol: Expedited</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-cyan-400 border border-white/10"><ShieldCheck className="w-5 h-5" /></div>
                 <div>
-                  <div className="text-[10px] uppercase font-black tracking-widest text-white/30">Lab Certified</div>
-                  <div className="text-xs font-bold">Quality Guaranteed</div>
+                  <div className="text-[10px] uppercase font-black tracking-widest text-white/30">Lab Quality</div>
+                  <div className="text-xs font-bold">Certification Active</div>
                 </div>
               </div>
             </div>
@@ -265,15 +311,15 @@ export default function ProductDetailsPage() {
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-cyan-400 fill-cyan-400' : 'text-zinc-700'}`} />
+                    <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating || 4.5) ? 'text-cyan-400 fill-cyan-400' : 'text-zinc-700'}`} />
                   ))}
                 </div>
-                <div className="text-white/40 text-xs font-bold uppercase tracking-widest">{product.reviewsCount} manifest logs</div>
+                <div className="text-white/40 text-xs font-bold uppercase tracking-widest">{(product.reviewsCount || 0)} manifest logs</div>
               </div>
             </div>
             
             <div className="p-8 bg-white/5 border border-white/5 rounded-3xl backdrop-blur-sm">
-              <h4 className="text-xs font-black uppercase tracking-widest text-white/60 mb-4">Submit Manifest Report</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white/60 mb-4 font-mono">Post Report</h4>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -306,7 +352,7 @@ export default function ProductDetailsPage() {
 
           <div className="flex-1 space-y-8">
             <div className="py-20 text-center border border-dashed border-white/10 rounded-[2.5rem]">
-              <p className="text-white/20 font-black uppercase text-[10px] tracking-widest">No telemetry logs yet preserved for this construct</p>
+              <p className="text-white/20 font-black uppercase text-[10px] tracking-widest">No telemetry logs yet preserved for this specific unit</p>
             </div>
             <Button variant="ghost" className="w-full h-16 border border-white/5 rounded-2xl text-white/20 hover:text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]">
               Load more telemetry logs
