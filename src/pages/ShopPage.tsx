@@ -405,7 +405,7 @@ export default function ShopPage() {
                     <Button 
                       onClick={(e) => handleQuickAdd(product, e)}
                       title="Initialize Assembly"
-                      className="bg-white text-black hover:bg-orange-500 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 hover:text-white"
+                      className="bg-white text-black hover:bg-cyan-400 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 hover:text-white"
                     >
                       <ShoppingCart className="w-6 h-6" />
                     </Button>

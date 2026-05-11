@@ -65,7 +65,7 @@ export default function ShowcasePage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.1 }}
-            className="break-inside-avoid relative group bg-zinc-900 border border-white/5 rounded-3xl overflow-hidden hover:border-orange-500/30 transition-all duration-500"
+            className="break-inside-avoid relative group bg-zinc-900 border border-white/5 rounded-3xl overflow-hidden hover:border-cyan-400/30 transition-all duration-500"
           >
             <img 
               src={item.imageUrl} 
