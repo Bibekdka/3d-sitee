@@ -132,7 +132,7 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center gap-4 text-lg font-medium"
               >
-                <link.icon className="w-5 h-5 text-cyan-400" />
+                <link.icon className="w-5 h-5 text-orange-500" />
                 {link.name}
               </Link>
             ))}
@@ -142,7 +142,7 @@ export default function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-4 text-lg font-medium"
             >
-              <ShoppingCart className="w-5 h-5 text-cyan-400" />
+              <ShoppingCart className="w-5 h-5 text-orange-500" />
               Cart ({cartCount})
             </Link>
             <Link 
@@ -150,7 +150,7 @@ export default function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-4 text-lg font-medium"
             >
-              <User className="w-5 h-5 text-cyan-400" />
+              <User className="w-5 h-5 text-orange-500" />
               {user ? "Profile" : "Sign In"}
             </Link>
           </motion.div>

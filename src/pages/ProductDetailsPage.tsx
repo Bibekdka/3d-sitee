@@ -98,6 +98,44 @@ export default function ProductDetailsPage() {
         
         if (docSnap.exists()) {
           setProduct({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          // Check for fallback products if DB record is missing
+          const fallbacks = [
+            {
+              id: 'p1',
+              name: 'Vanguard EXO-S1',
+              price: 129,
+              category: 'Wearables',
+              imageUrls: ['https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&q=80&w=1000'],
+              stock: 10,
+              rating: 4.8,
+              description: "Vanguard units offer superior articulation for sub-zero environments."
+            },
+            {
+              id: 'p2',
+              name: 'Nebula Light Node',
+              price: 89,
+              category: 'Lighting',
+              imageUrls: ['https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=1000'],
+              stock: 15,
+              rating: 4.9,
+              description: "Adaptive luminosity with synaptic intensity control."
+            },
+            {
+              id: 'p3',
+              name: 'Titan Graft Tool',
+              price: 45,
+              category: 'Tools',
+              imageUrls: ['https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=1000'],
+              stock: 20,
+              rating: 4.7,
+              description: "High-torque graft interface for industrial gear maintenance."
+            }
+          ];
+          const found = fallbacks.find(p => p.id === id);
+          if (found) {
+            setProduct(found);
+          }
         }
 
         // Check if item is already in wishlist

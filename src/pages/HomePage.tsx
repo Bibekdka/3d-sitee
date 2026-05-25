@@ -60,8 +60,25 @@ export default function HomePage() {
         const q = query(collection(db, 'showcase'), orderBy('createdAt', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShowcaseItem));
+        
         if (list.length > 0) {
           setShowcaseItems(list);
+        } else {
+          // Fallback static items for an empty catalog
+          setShowcaseItems([
+            { 
+              id: 'fallback-1', 
+              imageUrl: 'https://images.unsplash.com/photo-1631553127988-347478e0ea0d?auto=format&fit=crop&q=80&w=2000', 
+              comment: 'Perfect tolerances on this drone frame.', 
+              username: 'alpha_zero' 
+            },
+            { 
+              id: 'fallback-2', 
+              imageUrl: 'https://images.unsplash.com/photo-1608178398319-48f814d0750c?auto=format&fit=crop&q=80&w=2000', 
+              comment: 'Minimalist lighting node materialization.', 
+              username: 'pixel_drifter' 
+            }
+          ]);
         }
       } catch (err) {
         console.error("Showcase Fetch Error:", err);

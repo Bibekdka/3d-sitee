@@ -1,14 +1,31 @@
 import { GoogleGenAI } from "@google/genai";
 
+let genAI: GoogleGenAI | null = null;
+
+function getGenAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      genAI = new GoogleGenAI({ apiKey });
+    }
+  }
+  return genAI;
+}
+
 export async function getProductRecommendations(userInterests: string[]) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-    console.warn("Gemini API key is not configured. AI recommendations will be unavailable.");
-    return null;
+  const fallbacks = [
+    "Futuristic Kinetic Sculptures - Modular desk ornaments with magnetic fluid dynamics.",
+    "Bioluminescent Planters - 3D printed with translucent bio-polymers for soft ambient glow.",
+    "Modular Tech Organizers - Carbon-fiber reinforced docking stations with customizable slots."
+  ];
+
+  const ai = getGenAI();
+  if (!ai) {
+    console.warn("GEMINI_API_KEY is missing. Using static manifestation logs.");
+    return fallbacks.join('\n');
   }
   
   try {
-    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Based on these interests: ${userInterests.join(', ')}, suggest 3 types of 3D printed products that would be futuristic and cool. Return as a short bulleted list.`,
@@ -16,6 +33,6 @@ export async function getProductRecommendations(userInterests: string[]) {
     return response.text;
   } catch (error) {
     console.error("Gemini Error:", error);
-    return null;
+    return fallbacks.join('\n');
   }
 }

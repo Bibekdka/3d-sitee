@@ -9,22 +9,39 @@ export function useAuthListener() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        const userData = userDoc.exists() ? userDoc.data() : null;
-        
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-          role: userData?.role || 'user',
-          ...userData
-        });
-      } else {
-        setUser(null);
+      try {
+        if (firebaseUser) {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userData = userDoc.exists() ? userDoc.data() : null;
+          
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            role: userData?.role || 'user',
+            ...userData
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Auth sync failure:", error);
+        // Fallback to basic firebase user info if doc fetch fails
+        if (firebaseUser) {
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            role: 'user'
+          });
+        } else {
+          setUser(null);
+        }
+      } finally {
+        setInitializing(false);
       }
-      setInitializing(false);
     });
 
     return () => unsubscribe();

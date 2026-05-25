@@ -94,7 +94,41 @@ export default function ShopPage() {
         const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(50));
         const querySnapshot = await getDocs(q);
         const productList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setProducts(productList);
+        
+        if (productList.length > 0) {
+          setProducts(productList);
+        } else {
+          // Fallback static catalog
+          setProducts([
+            {
+              id: 'p1',
+              name: 'Vanguard EXO-S1',
+              price: 129,
+              category: 'Wearables',
+              imageUrls: ['https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&q=80&w=1000'],
+              stock: 10,
+              rating: 4.8
+            },
+            {
+              id: 'p2',
+              name: 'Nebula Light Node',
+              price: 89,
+              category: 'Lighting',
+              imageUrls: ['https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=1000'],
+              stock: 15,
+              rating: 4.9
+            },
+            {
+              id: 'p3',
+              name: 'Titan Graft Tool',
+              price: 45,
+              category: 'Tools',
+              imageUrls: ['https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=1000'],
+              stock: 20,
+              rating: 4.7
+            }
+          ]);
+        }
       } catch (err) {
         console.error("Catalog access failure:", err);
       } finally {
@@ -405,7 +439,7 @@ export default function ShopPage() {
                     <Button 
                       onClick={(e) => handleQuickAdd(product, e)}
                       title="Initialize Assembly"
-                      className="bg-white text-black hover:bg-cyan-400 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 hover:text-white"
+                      className="bg-white text-black hover:bg-orange-500 rounded-full w-14 h-14 shadow-2xl transition-all scale-90 group-hover:scale-100 hover:text-white"
                     >
                       <ShoppingCart className="w-6 h-6" />
                     </Button>
